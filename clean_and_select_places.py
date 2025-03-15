@@ -39,8 +39,8 @@ def fix_puntuation_problems(daframe):
     return daframe
     
 
-def create_csv(dataframe, file_name):
-    dataframe.to_csv('DATOS/CLEAN/'+file_name+'.csv', index=False)  
+def create_csv(dataframe, directory, file_name):
+    dataframe.to_csv(directory+file_name, index=False)  
 
 def clean_actividad_economica():
     path = "DATOS/Actividad_economica"
@@ -228,7 +228,7 @@ if __name__ == '__main__':
     for file in xml_files:
         print("Reading ", file)
         data_to_csv_from_xml = clean_xml_files(barrios_en_poligonos_data, "DATOS/"+file+".xml") 
-        create_csv(data_to_csv_from_xml, file+"_clean")
+        create_csv(data_to_csv_from_xml, 'DATOS/CLEAN/',  file+"_clean")
     print("main")
     
 #%% PRUEBAS

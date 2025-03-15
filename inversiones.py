@@ -42,7 +42,11 @@ def clean_long_lat_values(lat_list, long_list):
             split_long2 = split_long[0]+split_long[1]+split_long[2]
         long_list[ele] = float(split_long2[:2] + '.' + split_long2[2:])
     return lat_list, long_list
-        
+
+def clean_numeric_column(x):
+    split_x = x.split('.')
+    split_x_float= float(''.join(split_x).replace(',', '.'))
+    return split_x_float
     
 
 #%%
@@ -95,55 +99,90 @@ def select_and_clean_inversiones():
         
         
         # Se genera el csv limpio
-        clean_and_select_places.create_csv(df_selected_drop, dir_list[file_name]+"nuevo")
+        outdir_inv = 'DATOS/CLEAN/INVERSIONES/'
+        if not os.path.exists(outdir_inv):
+            os.mkdir(outdir_inv)
+        clean_and_select_places.create_csv(df_selected_drop, outdir_inv, dir_list[file_name])
+        
+
+def agrupaInversiones(df_general):
+    # Se abre los nuevos archivos limpios
+    path = "DATOS/CLEAN/INVERSIONES"
+    dir_list = os.listdir(path)
+    df_full_inversiones = pd.DataFrame()
+    list_barrio = []
+    df_general["Inversion"] = 0
+    for file_name in range(len(dir_list)):
+        print("Reading cleaned ", dir_list[file_name])
+        df = pd.read_csv(str(path)+"/"+str(dir_list[file_name]), sep=',', encoding='utf-8')
+        # Vamos a agrupar tambien todas las inversiones en un único Dataframe para poder 
+        # sacar algo de conocimiento previo
+        df_full_inversiones = pd.concat([df_full_inversiones, df], ignore_index=True, sort=False)
+        # Se agrupan en listas los barrios
+        list_barrio = list(df["Denominacion Barrio"])
+        tipos_inv = set(list(df["DENOMINACIÓN LÍNEA DE INVERSIÓN"]))
+        # Se transforma la columna
+        df["Total previsto"] = df["Total previsto"].apply(clean_numeric_column)
+        #df["B"] = df["B"].apply(add_4)
+        for ele_barrio in list_barrio:
+                aux_df = df.loc[(df["Denominacion Barrio"] == ele_barrio)]
+                anyo_inv = aux_df.iloc[0, aux_df.columns.get_loc("anyo")]
+                sum_inversion = aux_df["Total previsto"].sum()
+                # Se busca el año y el barrio en el df_general y se le asigna nuevo valor a la inversion
+                df_general.loc[(df_general['anyo'] == anyo_inv) & (df_general["Barrio"] == ele_barrio), 'Inversion'] = sum_inversion
+    return df_full_inversiones, df_general
+
+def crear_archivo_global():
+    barrios_df = clean_and_select_places.get_limite_barrios()
+    nombre_barrios = list(barrios_df["nombre_barrio"])
+    anyos = list(range(2020,2025))
+    # Se crea el dataframe
+    barrios = np.tile(nombre_barrios, len(anyos))
+    anyo_rep = np.repeat(anyos, len(nombre_barrios))
+    df_general = pd.DataFrame({"Barrio": barrios, "anyo": anyo_rep})
+    return df_general
+    
 
 #%%
 
 if __name__ == '__main__':
-    select_and_clean_inversiones()
+    df_general = crear_archivo_global()
+    #select_and_clean_inversiones()
+    df_full_inversiones, df_general = agrupaInversiones(df_general)
+    print("Creating full_inversiones20-25 csv...")
+    clean_and_select_places.create_csv(df_full_inversiones, 'DATOS/CLEAN/INVERSIONES/', "full_inversiones20-25.csv")
+    print("Creating general_data csv...")
+    clean_and_select_places.create_csv(df_general, 'DATOS/CLEAN/', "general_data.csv")
     print("main")
     
 
-     
-
-
 #%%
-#2022_Inversiones_Principales  / 2021_GeolocalizacionInversiones
-etiqueta_barrio = []
-polys_json = clean_and_select_places.get_limite_barrios()
-df = pd.read_csv(str(path)+"/2023_Inversiones_Principales.csv", index_col=0, sep=';', encoding='utf-8')
-df_selected = df[sel_columns]
-df_selected = df_selected.dropna()
-df_selected["anyo"] = anyo[file_name]
-df_selected_drop = df_selected.drop_duplicates()
-#df_selected_drop['Latitud'] = df_selected_drop['Latitud'].str[1:]
-#df_selected_drop["Latitud"] = pd.to_numeric(df_selected_drop["Latitud"])
-#df_selected_drop["Longitud"] = pd.to_numeric(df_selected_drop["Longitud"])
+#Crear un dataframe para ir metiendo columnas de datos
+#barrios_df = clean_and_select_places.get_limite_barrios()
+#nombre_barrios = list(barrios_df["nombre_barrio"])
+#año inversiones 
+path = "DATOS/CLEAN/INVERSIONES"
+df = pd.read_csv(str(path)+"/2022_Inversiones_Principales.csv", sep=',', encoding='utf-8', decimal=',',header=0)
+list_barrio = list(df["Denominacion Barrio"])
+tipos_inv = set(list(df["DENOMINACIÓN LÍNEA DE INVERSIÓN"]))
 
 
+barrios_df = clean_and_select_places.get_limite_barrios()
+nombre_barrios = list(barrios_df["nombre_barrio"])
+anyos = list(range(2020,2025))
 
-lat_list = list(df["Latitud"])
-lon_list = list(df["Longitud"])
+barrios = np.tile(nombre_barrios, len(anyos))
+anyo_rep = np.repeat(anyos, len(nombre_barrios))
+df_prueba = pd.DataFrame({"Barrio": barrios, "anyo": anyo_rep})
+df_prueba["Inversion"] = 0
 
-for ele in range(len(df["Latitud"])):
-    # Transformacion para los valores de latitud
-    split_lati = lat_list[ele].split(".")
-    split_lati2 = split_lati[0]+split_lati[1]
-    lat_list[ele] = float(split_lati2[:2] + '.' + split_lati2[2:])
-    # Transformacion para los valores de longitud
-    split_long = lon_list[ele].split(".")
-    split_long2 = split_long[0]+split_long[1]
-    lon_list[ele] = float(split_long2[:2] + '.' + split_long2[2:])
-    
-print(lat_list,lon_list )
 
-#lat_list,lon_list = list(df_selected_drop["Latitud"]),list(df_selected_drop["Longitud"])
+for ele_barrio in list_barrio:
+    print(ele_barrio)
+    aux_df = df.loc[(df["Denominacion Barrio"] == ele_barrio)]
+    anyo_inv = aux_df.iloc[0, aux_df.columns.get_loc("anyo")]
+    sum_inversion = aux_df["Total previsto"].sum()
+    df_prueba.loc[(df_prueba['anyo'] == anyo_inv) & (df_prueba["Barrio"] == ele_barrio), 'Inversion'] = sum_inversion
 
-for ele in range(len(lat_list)):
-    etiqueta_barrio.append(clean_and_select_places.check_barrio(polys_json, float(lat_list[ele]), float(lon_list[ele])))
-    try:
-        utm__coords = clean_and_select_places.latlon_to_utm(lat_list[ele], lon_list[ele])
-    except Exception:
-        print(" ERROR")
-        print(lat_list[ele], lon_list[ele])        
+
         
