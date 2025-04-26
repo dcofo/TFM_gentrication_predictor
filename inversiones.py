@@ -147,7 +147,7 @@ def crear_archivo_global():
 
 if __name__ == '__main__':
     df_general = crear_archivo_global()
-    #select_and_clean_inversiones()
+    select_and_clean_inversiones()
     df_full_inversiones, df_general = agrupaInversiones(df_general)
     print("Creating full_inversiones20-25 csv...")
     clean_and_select_places.create_csv(df_full_inversiones, 'DATOS/CLEAN/INVERSIONES/', "full_inversiones20-25.csv")

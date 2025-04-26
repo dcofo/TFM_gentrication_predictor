@@ -54,17 +54,28 @@ def clean_actividad_economica():
         df = pd.read_csv(str(path)+"/"+str(dir_list[file_name]), index_col=0, sep=';', encoding='latin-1')
         df_selected = df[sel_columns]
         df_selected["anyo"] = anyo[file_name]
+        # Se eliminan filas duplicadas y las que contienen valores nulos
         df_selected_drop = df_selected.drop_duplicates()
-        df_selected_drop["coordenada_x_local"] = df_selected_drop["coordenada_x_local"].str.replace(',', '.').astype(float)
-        df_selected_drop["coordenada_y_local"] = df_selected_drop["coordenada_y_local"].str.replace(',', '.').astype(float)
+        df_selected_drop = df_selected_drop.dropna()
+        # Se transforman las columnas de coordenadas
+        if  (anyo[file_name] != 2023) and (anyo[file_name] != 2024) :
+            df_selected_drop["coordenada_x_local"] = df_selected_drop["coordenada_x_local"].str.replace(',', '.').astype(float)
+            df_selected_drop["coordenada_y_local"] = df_selected_drop["coordenada_y_local"].str.replace(',', '.').astype(float)
+            
         df_selected_drop["coordenada_x_local"] = pd.to_numeric(df_selected_drop["coordenada_x_local"])
         df_selected_drop["coordenada_y_local"] = pd.to_numeric(df_selected_drop["coordenada_y_local"])
+            
         # Delete rows with 0
         df_selected_drop = df_selected_drop.loc[(df_selected_drop["coordenada_x_local"] != 0) &   (df_selected_drop["coordenada_y_local"] != 0) ]
         # Create new columns
         df_selected_drop["latitude"], df_selected_drop["longitude"] = utm.to_latlon(df_selected_drop["coordenada_x_local"], df_selected_drop["coordenada_y_local"], 30, 'T')
         #df_append = df_selected_drop.append(df_append, ignore_index=True)
         #df_append = df_selected_drop.merge(df_append, on = sel_columns[1], how = 'outer')
+        # Se renombran las columnas
+        df_selected_drop.rename(columns={"rotulo": "nombre", 
+                                         "desc_seccion": "actividad_general",
+                                         "desc_division":"actividad_concreta",
+                                         "desc_epigrafe":"actividad_en_detalle"})
         # Se crea un nuevo csv 
         df_selected_drop.to_csv('DATOS/CLEAN/Actividad_economica/'+str(dir_list[file_name]), index=False)  
 
@@ -96,42 +107,12 @@ def check_barrio(polys_json, latitud, longitud):
             return polys_json["nombre_barrio"][poligon]
 
 def join_files(path,filename):
+    print("Join files...")
     dir_list = os.listdir(path)
-    df_concat = pd.concat([pd.read_csv(f) for f in dir_list ], ignore_index=True)
-    df_concat.to_csv(path+'/'+filename+'_concat_files.csv', index=False)
-'''
-def get_limite_barrios():
-    # Se carga y se tratan los datos referentes a los límites de los barrios
-    path = "DATOS/Límites de los Barrios Administrativos de Madrid.geojson"
-    file = open(path)
-    # Se carga el archivo como geopandas
-    polys_json = gpd.read_file(file, driver='GeoJSON')
-    polys_json['coordinates'] = polys_json['coordinates'].str[1:-1].apply(literal_eval)
-    
-    # Se aplica la funcion a la columna de coordenadas
-    polys_json['coordinates'] = polys_json['coordinates'].apply(get_polygon)
-    
-    centroid_barrios_path = "DATOS/centroid_barrios.csv"
-    neighbo = pd.read_csv(centroid_barrios_path, sep=',', encoding='latin-1',on_bad_lines='skip', float_precision='round_trip')
-    lati = list(neighbo["Latitude"])
-    longi = list(neighbo["Longitude"])
-    barris = list(neighbo['Name'])
+    df_concat = pd.concat([pd.read_csv(path+f, sep=',', encoding='utf-8') 
+                           for f in dir_list ], ignore_index=True)
+    df_concat.to_csv(path+'/'+filename+'_concat_files_v1.csv', index=False)
 
-    # Se recorren cada poligono para etiquetar el nombre del barrio correctamente segun el calculo del centroide
-    array_cent = []
-    array_order_barri = []
-    for poligon in polys_json["coordinates"]:
-        cent = poligon.centroid
-        array_cent.append(cent.wkt)
-        for sel in range(len(lati)):
-            if lati[sel] == cent.x:
-                if longi[sel] == cent.y:
-                    array_order_barri.append(barris[sel])
-                    break
-    polys_json["nombre_barrio"] = array_order_barri
-    return polys_json
-    
-'''
 
 #%% FUNCIONES PARA TRATAMIENTO CONCRETO DE LIMPIEZA DE ARCHIVOS
 
@@ -222,13 +203,14 @@ def clean_xml_files(polys_json, file_name):
 #%%
 
 if __name__ == '__main__':
-    #clean_actividad_economica()
-    barrios_en_poligonos_data = get_limite_barrios()
+    clean_actividad_economica()
+    join_files('DATOS/CLEAN/Actividad_economica/', 'actividad_economica')
+    '''barrios_en_poligonos_data = get_limite_barrios()
     xml_files = ["alojamientos_v1_es", 'turismo_v1_es']
     for file in xml_files:
         print("Reading ", file)
         data_to_csv_from_xml = clean_xml_files(barrios_en_poligonos_data, "DATOS/"+file+".xml") 
-        create_csv(data_to_csv_from_xml, 'DATOS/CLEAN/',  file+"_clean")
+        create_csv(data_to_csv_from_xml, 'DATOS/CLEAN/',  file+"_clean")'''
     print("main")
     
 #%% PRUEBAS
