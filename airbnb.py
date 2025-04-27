@@ -165,7 +165,3 @@ for year in general_dict.keys():
 
 #%%
 #print(df_general[""])
-print(df_general.loc[(df_general['anyo'] == 2020) & (df_general["Barrio"] == "Abrantes"), 'airbnb'] )
-
-df_general.loc[(df_general['anyo'] == 2020) & (df_general["Barrio"] == "Abrantes"), 'airbnb'] = 666
-print(general_dict['2020']['Abrantes'])

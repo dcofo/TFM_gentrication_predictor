@@ -5,7 +5,7 @@ Created on Mon Apr 14 20:09:03 2025
 @author: Nievesita
 """
 
-# Se va a aladir una columna donde anyo se va a poner en formato timestamp
+# Se va a añadir una columna donde anyo se va a poner en formato timestamp
 # de forma que se cargue correctamente en CARTO
 
 import pandas as pd
