@@ -77,7 +77,7 @@ def clean_actividad_economica():
                                          "desc_division":"actividad_concreta",
                                          "desc_epigrafe":"actividad_en_detalle"})
         # Se crea un nuevo csv 
-        df_selected_drop.to_csv('DATOS/CLEAN/Actividad_economica/'+str(dir_list[file_name]), index=False)  
+        df_selected_drop.to_csv('DATOS/CLEAN/Actividad_economica2/'+str(dir_list[file_name]), index=False)  
 
 def clean_alojamiento_turisticos_XML():
     path = "DATOS"
@@ -203,9 +203,10 @@ def clean_xml_files(polys_json, file_name):
 #%%
 
 if __name__ == '__main__':
-    clean_actividad_economica()
-    join_files('DATOS/CLEAN/Actividad_economica/', 'actividad_economica')
-    '''barrios_en_poligonos_data = get_limite_barrios()
+    #clean_actividad_economica()
+    #join_files('DATOS/CLEAN/Actividad_economica2/', 'actividad_economica')
+    barrios_en_poligonos_data = get_limite_barrios()
+    '''
     xml_files = ["alojamientos_v1_es", 'turismo_v1_es']
     for file in xml_files:
         print("Reading ", file)

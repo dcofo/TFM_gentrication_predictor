@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Apr 26 12:02:20 2025
 
-@author: Nieves Fernández Ochoa
+@author: nievesfo
 
 Descripción: En este script se lleva a cabo el tratamiento de datos para añadir al archivo de indicadores:
     -Datos de nivel educativo de los residentes 
     -Precio de la vivienda nueva y de segunda mano
-    -Numero de establecimientos de diferente propósito
 """
 
 import pandas as pd
@@ -24,7 +22,7 @@ import clean_and_select_places
 
 #%% FUNCIONES POR FICHERO
 
-def extract_nivel_educativo_indicador():
+def extract_nivel_educativo_indicador(file):
     # Se carga el archivo y se renombran las columnas del año y del nombre del barrio
     df = pd.read_csv("DATOS/nivel_educativo.csv", sep=';', encoding='utf-8', skiprows=6)
     df = df.rename(columns={"Unnamed: 0": "anyo",
@@ -85,7 +83,7 @@ def extract_nivel_educativo_indicador():
         general_dict[str(an)] = save_dict
      
     # Se carga el archivo de indicadores y se le añaden 3 columnas mas ne referencia al nivel de estudios
-    df_general = pd.read_csv("DATOS/CLEAN/general_data_timestamp.csv", sep=',', encoding='utf-8').sort_values(['anyo', 'Barrio'], ascending=[True, True])
+    df_general = pd.read_csv(file, sep=',', encoding='utf-8').sort_values(['anyo', 'Barrio'], ascending=[True, True])
     df_general['poblacion_noEstudios'] = 0
     df_general['poblacion_estudios_medios'] = 0
     df_general['poblacion_estudios_superiores'] = 0
@@ -164,71 +162,12 @@ def extract_precio_vivienda_indicator(dataframe_general):
 #%% MAIN
 
 if __name__ == '__main__':
-    df_nivel_educativo = extract_nivel_educativo_indicador()
+    path = 'DATOS/CLEAN/'
+    file = "general_data_v2.csv"
+    df_nivel_educativo = extract_nivel_educativo_indicador(path+file)
     df_precio_vivienda = extract_precio_vivienda_indicator(df_nivel_educativo)
-    clean_and_select_places.create_csv(df_precio_vivienda, 'DATOS/CLEAN/', "general_data_timestamp_v1.csv")
+    clean_and_select_places.create_csv(df_precio_vivienda, path, "general_data_v3.csv")
     print("main")
 
 
-
-#%%
-
-df = pd.read_csv("DATOS/precio_vivienda_total.csv", sep=';', encoding='utf-8', skiprows=5)
-df = df.dropna()
-df = df.rename(columns={"2023": "2024",
-                        "2022": "2023",
-                        "2021": "2022",
-                        "2020": "2021",
-                        "2019": "2020",
-                        "Unnamed: 1": "Barrio"})
-
-list_barrio = []
-
-
-for item in list(df["Barrio"]):
-    split_barrio = item.split('. ')
-    if len(split_barrio) >1:
-        list_barrio.append(split_barrio[1])
-    else:
-       list_barrio.append(split_barrio[0]) 
-        
-df["Barrio"] = list_barrio
-
-col_names_to_float = df.columns[2:]
-
-for column in col_names_to_float:
-    df[column] = df[column].str.replace('.', '').str.replace(',', '.').astype(float)
-
-#df_final = pd.concat([df, df.loc[df.index.repeat(5)]], ignore_index=True).sort_values(['id'])
-df_final = pd.DataFrame()
-df_final_anyo = pd.DataFrame()
-for anyo in col_names_to_float:
-    df_final["Barrio"] = df["Barrio"]
-    df_final["anyo"] = int(anyo)
-    df_final["precio vivienda (euros/m2)"] = df[anyo]
-    df_final_anyo = pd.concat([df_final_anyo, df_final], ignore_index=True, sort=False)
-
-# Debido a que hay valores por distrito y ciudad se va a hacer la misma fórmula que para el resto:
-# crear un diccionario con los valores que luego se irán asignado fila a fila al dataframe general
-general_dict = {}
-for an in set(list(df_final_anyo["anyo"])):
-    df_anyo_aux = df_final_anyo.loc[df_final_anyo['anyo'] == an]
-    save_dict = {}
-    for n_barrio in list_barrio:
-        precio_vivienda = df_anyo_aux.loc[df_anyo_aux['Barrio'] == 
-                                       n_barrio]["precio vivienda (euros/m2)"].reset_index(drop=True)[0]
-        save_dict[n_barrio] = precio_vivienda
-    general_dict[str(an)] = save_dict
-    
-df_general = pd.read_csv("DATOS/CLEAN/general_data.csv", sep=',', encoding='utf-8').sort_values(['anyo', 'Barrio'], ascending=[True, True])
-df_general['precio_vivienda'] = 0
-
-        
-for anio in general_dict.keys():
-    for barri in general_dict[anio].keys():
-        df_general.loc[(df_general['anyo'] == int(anio)) & 
-                        (df_general["Barrio"] == barri), 'precio_vivienda'] =  general_dict[anio][barri]
-        
-    
-#%%
 
