@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-En este archivo se transforman y limpian los datos referentes a los alojamientos 
+@author: nievesfo
+
+Descripción: En este archivo se transforman y limpian los datos referentes a los alojamientos 
 airbnb de la ciudad de MAdrid por barrio y año. En el archivo de indicadores se 
 almacenará la cantidad de alojamientos existentes ( suma total )
-
-@author: nievesfo
 """
 
 
