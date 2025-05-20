@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Nov 19 23:57:16 2024
 
-@author: Nieves Fernández Ochoa
+@author: nievesfo
 
-Descripción: Script para limpieza de datos de lugares
+Descripción: Script para limpieza de los datos relativos a la actividad economica por barrio y año
 
 """
 
@@ -33,10 +32,6 @@ def remove_duplicates(dataframe):
 
 def remove_empty_neighbor(daframe):
     return daframe[daframe.barrio != "None"]
-
-def fix_puntuation_problems(daframe):
-    # hacer mas adelante
-    return daframe
     
 
 def create_csv(dataframe, directory, file_name):
@@ -45,8 +40,8 @@ def create_csv(dataframe, directory, file_name):
 def clean_actividad_economica():
     path = "DATOS/Actividad_economica"
     anyo = list(range(2018,2025))
-    sel_columns = ["rotulo", "id_distrito_local", "desc_barrio_local", "id_barrio_local", "desc_barrio_local", "coordenada_x_local",
-                      "coordenada_y_local", "desc_seccion", "desc_division", "desc_epigrafe"]
+    sel_columns = ["rotulo", "desc_barrio_local", "id_barrio_local", "coordenada_x_local",
+                   "coordenada_y_local", "desc_seccion", "desc_division", "desc_epigrafe"]
     dir_list = os.listdir(path)
     #df_append = pd.DataFrame()
     for file_name in range(len(dir_list)):
@@ -54,6 +49,7 @@ def clean_actividad_economica():
         df = pd.read_csv(str(path)+"/"+str(dir_list[file_name]), index_col=0, sep=';', encoding='latin-1')
         df_selected = df[sel_columns]
         df_selected["anyo"] = anyo[file_name]
+        df_selected['desc_barrio_local'] = df_selected['desc_barrio_local'].str.strip()
         # Se eliminan filas duplicadas y las que contienen valores nulos
         df_selected_drop = df_selected.drop_duplicates()
         df_selected_drop = df_selected_drop.dropna()
@@ -69,18 +65,16 @@ def clean_actividad_economica():
         df_selected_drop = df_selected_drop.loc[(df_selected_drop["coordenada_x_local"] != 0) &   (df_selected_drop["coordenada_y_local"] != 0) ]
         # Create new columns
         df_selected_drop["latitude"], df_selected_drop["longitude"] = utm.to_latlon(df_selected_drop["coordenada_x_local"], df_selected_drop["coordenada_y_local"], 30, 'T')
-        #df_append = df_selected_drop.append(df_append, ignore_index=True)
-        #df_append = df_selected_drop.merge(df_append, on = sel_columns[1], how = 'outer')
+        
         # Se renombran las columnas
         df_selected_drop.rename(columns={"rotulo": "nombre", 
                                          "desc_seccion": "actividad_general",
                                          "desc_division":"actividad_concreta",
                                          "desc_epigrafe":"actividad_en_detalle"})
+        df_selected_drop["anyo_timestamp"] = pd.to_datetime(df_selected_drop['anyo'], format='%Y').dt.strftime('%Y-%m-%d')
         # Se crea un nuevo csv 
         df_selected_drop.to_csv('DATOS/CLEAN/Actividad_economica2/'+str(dir_list[file_name]), index=False)  
 
-def clean_alojamiento_turisticos_XML():
-    path = "DATOS"
     
 
 def utm_to_latlon(dataframe):
@@ -203,8 +197,8 @@ def clean_xml_files(polys_json, file_name):
 #%%
 
 if __name__ == '__main__':
-    #clean_actividad_economica()
-    #join_files('DATOS/CLEAN/Actividad_economica2/', 'actividad_economica')
+    clean_actividad_economica()
+    join_files('DATOS/CLEAN/Actividad_economica2/', 'actividad_economica')
     barrios_en_poligonos_data = get_limite_barrios()
     '''
     xml_files = ["alojamientos_v1_es", 'turismo_v1_es']
@@ -214,44 +208,4 @@ if __name__ == '__main__':
         create_csv(data_to_csv_from_xml, 'DATOS/CLEAN/',  file+"_clean")'''
     print("main")
     
-#%% PRUEBAS
-
-# Se carga y se tratan los datos referentes a los límites de los barrios
-path = "DATOS/Límites de los Barrios Administrativos de Madrid.geojson"
-file = open(path)
-# Se carga el archivo como geopandas
-polys_json = gpd.read_file(file, driver='GeoJSON')
-polys_json['coordinates'] = polys_json['coordinates'].str[1:-1].apply(literal_eval)
-
-# Función para convertir en politicos arrays de coordenadas
-def get_polygon(list_coords):
-    point_list = [Point(y,x) for [x,y] in list_coords]
-    # Con todos los puntos se forman poligonos
-    polygon_feature = Polygon([[poly.x, poly.y] for poly in point_list])
-    return polygon_feature
-
-# Se aplica la funcion a la columna de coordenadas
-polys_json['coordinates'] = polys_json['coordinates'].apply(get_polygon)
-
-centroid_barrios_path = "DATOS/centroid_barrios.csv"
-neighbo = pd.read_csv(centroid_barrios_path, sep=',', encoding='latin-1',on_bad_lines='skip', float_precision='round_trip')
-lati = list(neighbo["Latitude"])
-longi = list(neighbo["Longitude"])
-barris = list(neighbo['Name'])
-
-# Se recorren cada poligono para etiquetar el nombre del barrio correctamente segun el calculo del centroide
-array_cent = []
-array_order_barri = []
-for poligon in polys_json["coordinates"]:
-    cent = poligon.centroid
-    array_cent.append(cent.wkt)
-    for sel in range(len(lati)):
-        if lati[sel] == cent.x:
-            if longi[sel] == cent.y:
-                array_order_barri.append(barris[sel])
-                break
-polys_json["nombre_barrio"] = array_order_barri
-
-
-
         
