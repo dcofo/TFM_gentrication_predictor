@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Mar  1 15:48:42 2025
+@author: nievesfo
 
-@author: Nievesita
+Descripción: Script que limpieza y transforma los datos de las inversiones aprobadas 
+            por el gobierno municipal desde 2020 a 2024
 """
 
 import pandas as pd
@@ -97,6 +98,21 @@ def select_and_clean_inversiones():
         df_selected_drop["Latitud"] = lat_list
         df_selected_drop["Longitud"] = lon_list
         
+        # Se corrigen los nombres de los barrios
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('Palos de Moguer', 'Palos de la Frontera')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('Rios Rosas','Ríos Rosas')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('Salvador','El Salvador')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('Los Jeronimos','Los Jerónimos')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('San Andrés',
+                                                                                         'Villaverde Alto, Casco Histórico de Villaverde')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('Los Angeles','Ángeles')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('San Cristobal','San Cristóbal')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('Casco histórico de Vicálvaro','Casco Histórico de Vicálvaro')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('LOS CARMENES','Los Cármenes')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('Fuentelareina','Fuentelarreina')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('Aguilas','Águilas')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('Apostol Santiago','Apóstol Santiago')
+        df_selected_drop['Denominacion Barrio'] = df_selected_drop['Denominacion Barrio'].str.replace('Puerta del Angel','Puerta del Ángel')
         
         # Se genera el csv limpio
         outdir_inv = 'DATOS/CLEAN/INVERSIONES/'
@@ -115,6 +131,10 @@ def agrupaInversiones(df_general):
     for file_name in range(len(dir_list)):
         print("Reading cleaned ", dir_list[file_name])
         df = pd.read_csv(str(path)+"/"+str(dir_list[file_name]), sep=',', encoding='utf-8')
+        # En caso de que no se haya detectado correctamente algún barrio
+        df = df.dropna()
+        # Se añade columna timestamp
+        df["anyo_timestamp"] = pd.to_datetime(df['anyo'], format='%Y').dt.strftime('%Y-%m-%d')
         # Vamos a agrupar tambien todas las inversiones en un único Dataframe para poder 
         # sacar algo de conocimiento previo
         df_full_inversiones = pd.concat([df_full_inversiones, df], ignore_index=True, sort=False)
@@ -123,7 +143,6 @@ def agrupaInversiones(df_general):
         tipos_inv = set(list(df["DENOMINACIÓN LÍNEA DE INVERSIÓN"]))
         # Se transforma la columna
         df["Total previsto"] = df["Total previsto"].apply(clean_numeric_column)
-        #df["B"] = df["B"].apply(add_4)
         for ele_barrio in list_barrio:
                 aux_df = df.loc[(df["Denominacion Barrio"] == ele_barrio)]
                 anyo_inv = aux_df.iloc[0, aux_df.columns.get_loc("anyo")]
@@ -150,39 +169,10 @@ if __name__ == '__main__':
     select_and_clean_inversiones()
     df_full_inversiones, df_general = agrupaInversiones(df_general)
     print("Creating full_inversiones20-25 csv...")
-    clean_and_select_places.create_csv(df_full_inversiones, 'DATOS/CLEAN/INVERSIONES/', "full_inversiones20-25.csv")
+    clean_and_select_places.create_csv(df_full_inversiones, 'DATOS/CLEAN/INVERSIONES/', "full_inversiones20-25_timestamp.csv")
     print("Creating general_data csv...")
     clean_and_select_places.create_csv(df_general, 'DATOS/CLEAN/', "general_data.csv")
     print("main")
     
-
-#%%
-#Crear un dataframe para ir metiendo columnas de datos
-#barrios_df = clean_and_select_places.get_limite_barrios()
-#nombre_barrios = list(barrios_df["nombre_barrio"])
-#año inversiones 
-path = "DATOS/CLEAN/INVERSIONES"
-df = pd.read_csv(str(path)+"/2022_Inversiones_Principales.csv", sep=',', encoding='utf-8', decimal=',',header=0)
-list_barrio = list(df["Denominacion Barrio"])
-tipos_inv = set(list(df["DENOMINACIÓN LÍNEA DE INVERSIÓN"]))
-
-
-barrios_df = clean_and_select_places.get_limite_barrios()
-nombre_barrios = list(barrios_df["nombre_barrio"])
-anyos = list(range(2020,2025))
-
-barrios = np.tile(nombre_barrios, len(anyos))
-anyo_rep = np.repeat(anyos, len(nombre_barrios))
-df_prueba = pd.DataFrame({"Barrio": barrios, "anyo": anyo_rep})
-df_prueba["Inversion"] = 0
-
-
-for ele_barrio in list_barrio:
-    print(ele_barrio)
-    aux_df = df.loc[(df["Denominacion Barrio"] == ele_barrio)]
-    anyo_inv = aux_df.iloc[0, aux_df.columns.get_loc("anyo")]
-    sum_inversion = aux_df["Total previsto"].sum()
-    df_prueba.loc[(df_prueba['anyo'] == anyo_inv) & (df_prueba["Barrio"] == ele_barrio), 'Inversion'] = sum_inversion
-
 
         
