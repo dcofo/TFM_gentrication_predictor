@@ -178,13 +178,19 @@ def extract_indicadores_csv():
            "Renta neta media anual de los hogares (Urban Audit)",
            "Hogares monoparentales: una mujer adulta con uno o más menores",
            "Hogares monoparentales: un hombre adulto con uno o más menores"]
-
+    num_monoparental = ["Hogares monoparentales: una mujer adulta con uno o más menores",
+    "Hogares monoparentales: un hombre adulto con uno o más menores"]
+    float_cols = ['Edad media de la población', 'Población densidad (hab./Ha.)', 
+                  "Porcentaje de envejecimiento (Población mayor de 65 años/Población total)", "Tamaño medio del hogar",
+                  "Tasa absoluta de paro registrado (febrero)", "Tasa bruta de natalidad (‰)", 
+                  "Tasa de crecimiento demográfico (porcentaje)", 'Superficie (Ha.)']
+    
     # Se eliminan espacios
     df_indicadores["barrio"] = df_indicadores["barrio"].str.strip()
     df_indicadores["indicador_completo"] = df_indicadores["indicador_completo"].str.strip()
 
     df_indicadores = df_indicadores.dropna(subset=["barrio"])
-    barrios = list(set(list(df_indicadores["barrio"])))
+    
     # Filtrar el DataFrame para incluir solo las filas con los KPIs deseados
     filtered_df = df_indicadores[df_indicadores['indicador_completo'].isin(list_kpis)].copy()
 
@@ -221,6 +227,10 @@ def extract_indicadores_csv():
         on=['anyo', 'Barrio'],  # Columnas en común
         how='left'              # Mantener todas las filas del archivo principal
     )
+    df_final['num_monoparental'] = df_final["Hogares monoparentales: una mujer adulta con uno o más menores"] + df_final["Hogares monoparentales: un hombre adulto con uno o más menores"]
+    df_final = df_final.drop(columns=num_monoparental)
+    df_final[float_cols] = df_final[float_cols].apply(lambda x: x.str.replace(',','.'))
+    df_final[float_cols] = df_final[float_cols].astype(float)
     return df_final
 
 

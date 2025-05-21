@@ -87,6 +87,9 @@ def extract_nivel_educativo_indicador(file):
     df_general['poblacion_noEstudios'] = 0
     df_general['poblacion_estudios_medios'] = 0
     df_general['poblacion_estudios_superiores'] = 0
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Concepción','La Concepción')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Villaverde Alto, Casco Histórico de Villaverde',
+                                                              'Villaverde Alto - Casco Histórico de Villaverde')
            
     for anio in general_dict.keys():
         for barri in general_dict[anio].keys():
