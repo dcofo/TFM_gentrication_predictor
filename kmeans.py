@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 13 17:00:23 2025
+@author: nievesfo
 
-@author: Nievesita
+Descripcion: Script para la aplicación del algoritmo no supervisado kmeans
 """
 
 import pandas as pd
@@ -61,20 +61,21 @@ def silhouette_method(data):
 
 if __name__ == '__main__':
     # Se carga el archivo de indicadores y se le hace una copia
-    df = pd.read_csv("DATOS/CLEAN/general_data_timestamp_v2.csv", sep=',', encoding='utf-8')
+    df = pd.read_csv("DATOS/CLEAN/general_data_v3.csv", sep=',', encoding='utf-8')
     dataset = df.copy()
     
     # Se crea una lista de todas las columnas de variables o features que se usarán 
-    kpis = ['Inversion', 'Superficie (Ha.)','Densidad (hab./Ha.)', 'Número Habitantes', 'Población Mujeres',
+    kpis = ['Inversion', 'Superficie (Ha.)','Población densidad (hab./Ha.)', 'Número Habitantes', 'Población Mujeres',
            'Edad media de la población', 'Personas con nacionalidad española','airbnb', 
            'poblacion_noEstudios','poblacion_estudios_medios', 'poblacion_estudios_superiores',
            'precio_vivienda','Personas con nacionalidad extranjera', 'Total hogares',"Tasa bruta de natalidad (‰)" ,
            "Población en etapas educativas", "Tasa de crecimiento demográfico (porcentaje)", 
            "Porcentaje de envejecimiento (Población mayor de 65 años/Población total)",
-           "Paro registrado (número de personas registradas en SEPE en febrero)", "Tamaño medio del hogar",  
-           "Valor catastral medio por inmueble de uso residencial", "num_hogar_monoparental", 
-           "num_bibliotecas_y_cultural", "num_centros_sociales", "Hogares con un hombre solo mayor de 65 años", 
-           "Hogares con una mujer sola mayor de 65 años"]
+           "Tasa absoluta de paro registrado (febrero)", "Tamaño medio del hogar",  
+           "Valor catastral medio por inmueble de uso residencial", "num_monoparental", 
+           "Hogares con un hombre solo mayor de 65 años", 
+           "Hogares con una mujer sola mayor de 65 años",
+           "Renta neta media anual de los hogares (Urban Audit)"]
     
     # Se calculan las diferencias entre años
     for kpi in kpis:
@@ -86,34 +87,33 @@ if __name__ == '__main__':
                  poblacion_etapa_educativa=('Población en etapas educativas', sum),
                  tasa_creci_demogr=('Tasa de crecimiento demográfico (porcentaje)', sum),
                  porcent_envejec=('Porcentaje de envejecimiento (Población mayor de 65 años/Población total)', sum),
-                 paro_registrado=('Paro registrado (número de personas registradas en SEPE en febrero)', sum),
+                 paro_registrado=("Tasa absoluta de paro registrado (febrero)", sum),
                  tamanio_hogar=('Tamaño medio del hogar', sum),
                  valor_catastral_inmueble=('Valor catastral medio por inmueble de uso residencial', sum),
-                 num_hogar_monoparental=('num_hogar_monoparental', sum),
-                 num_bibliotecas_y_cultural=('num_bibliotecas_y_cultural', sum),
-                 num_centros_sociales=('num_centros_sociales', 'mean'),
+                 num_hogar_monoparental=('num_monoparental', sum),                
                  num_mujer_sola=('Hogares con una mujer sola mayor de 65 años', sum),
                  num_hombre_solo=('Hogares con un hombre solo mayor de 65 años', sum),
                  superficie=('Superficie (Ha.)', sum),
-                 densidad=('Densidad (hab./Ha.)', sum),
+                 densidad=('Población densidad (hab./Ha.)', sum),
                  n_habitantes=('Número Habitantes', sum),
                  n_hab_mujeres=('Población Mujeres', sum),
                  edad_media_poblac=('Edad media de la población', sum),
                  num_espanioles=('Personas con nacionalidad española', sum),
-                 airbnb=('airbnb', 'mean'),
+                 airbnb=('airbnb', sum),
                  poblacion_noEstudios=('poblacion_noEstudios', sum),
                  poblacion_estudios_medios=('poblacion_estudios_medios', sum),
                  poblacion_estudios_superiores=('poblacion_estudios_superiores', sum),
                  precio_vivienda=('precio_vivienda', sum),
                  num_extranj=('Personas con nacionalidad extranjera', sum),
                  total_hogares=('Total hogares', sum),
-                 inversion=('Inversion', sum)
+                 inversion=('Inversion', sum),
+                 renta=("Renta neta media anual de los hogares (Urban Audit)",sum)
                  )                
             .reset_index()
         )
     new_variable_names = ["tasa_bruta_natalidad","poblacion_etapa_educativa","tasa_creci_demogr", "porcent_envejec",
                          "paro_registrado", "tamanio_hogar", "valor_catastral_inmueble", "num_hogar_monoparental",
-                         "num_bibliotecas_y_cultural", "num_centros_sociales", "num_mujer_sola", "num_hombre_solo",
+                         "renta", "num_mujer_sola", "num_hombre_solo",
                          "superficie", "densidad", "n_habitantes", "n_hab_mujeres", "edad_media_poblac","num_espanioles",
                          "airbnb", "poblacion_noEstudios", "poblacion_estudios_medios", "poblacion_estudios_superiores",
                          "precio_vivienda", "num_extranj", "total_hogares", "inversion"]
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     fig.show()
     
     #%% Se eliminan las filas altamente correlacionadas
-    df2 = df2.drop(columns=[1,2,4,12,13,16,22])
+    df2 = df2.drop(columns=[9,10,12,13,17,18,20,21,23])
 
     #%% APLICACION DEL METODO DE COMPONENTES PRINICPALES PARA REDUCIR EL NUMERO DE FEATURES
     # Se busca un número de componentes que aglutine el 90% de la varianza
@@ -189,17 +189,15 @@ if __name__ == '__main__':
              poblacion_etapa_educativa=('Población en etapas educativas', 'mean'),
              tasa_creci_demogr=('Tasa de crecimiento demográfico (porcentaje)', 'mean'),
              porcent_envejec=('Porcentaje de envejecimiento (Población mayor de 65 años/Población total)', 'mean'),
-             paro_registrado=('Paro registrado (número de personas registradas en SEPE en febrero)', 'mean'),
+             paro_registrado=('Tasa absoluta de paro registrado (febrero)', 'mean'),
              tamanio_hogar=('Tamaño medio del hogar', 'mean'),
              valor_catastral_inmueble=('Valor catastral medio por inmueble de uso residencial', 'mean'),
-             num_hogar_monoparental=('num_hogar_monoparental', 'mean'),
-             num_bibliotecas_y_cultural=('num_bibliotecas_y_cultural', 'mean'),
-             num_centros_sociales=('num_centros_sociales', 'mean'),
+             num_hogar_monoparental=('num_monoparental', 'mean'),
              num_mujer_sola=('Hogares con una mujer sola mayor de 65 años', 'mean'),
              num_hombre_solo=('Hogares con un hombre solo mayor de 65 años', 'mean'),
              inversion=('Inversion', 'mean'),
              superficie=('Superficie (Ha.)', 'mean'),
-             densidad=('Densidad (hab./Ha.)', 'mean'),
+             densidad=('Población densidad (hab./Ha.)', 'mean'),
              n_habitantes=('Número Habitantes', 'mean'),
              n_hab_mujeres=('Población Mujeres', 'mean'),
              edad_media_poblac=('Edad media de la población', 'mean'),
@@ -210,7 +208,8 @@ if __name__ == '__main__':
              poblacion_estudios_superiores=('poblacion_estudios_superiores', 'mean'),
              precio_vivienda=('precio_vivienda', 'mean'),
              num_extranj=('Personas con nacionalidad extranjera', 'mean'),
-             total_hogares=('Total hogares', 'mean'))
+             total_hogares=('Total hogares', 'mean'),
+             renta=("Renta neta media anual de los hogares (Urban Audit)",'mean'))
         .reset_index()
     )
     dataset_k3.to_csv('DATOS/PREDICCION/dataset_clusters_3_flourish.csv', index=False)
@@ -233,17 +232,15 @@ if __name__ == '__main__':
              poblacion_etapa_educativa=('Población en etapas educativas', 'mean'),
              tasa_creci_demogr=('Tasa de crecimiento demográfico (porcentaje)', 'mean'),
              porcent_envejec=('Porcentaje de envejecimiento (Población mayor de 65 años/Población total)', 'mean'),
-             paro_registrado=('Paro registrado (número de personas registradas en SEPE en febrero)', 'mean'),
+             paro_registrado=('Tasa absoluta de paro registrado (febrero)', 'mean'),
              tamanio_hogar=('Tamaño medio del hogar', 'mean'),
              valor_catastral_inmueble=('Valor catastral medio por inmueble de uso residencial', 'mean'),
-             num_hogar_monoparental=('num_hogar_monoparental', 'mean'),
-             num_bibliotecas_y_cultural=('num_bibliotecas_y_cultural', 'mean'),
-             num_centros_sociales=('num_centros_sociales', 'mean'),
+             num_hogar_monoparental=('num_monoparental', 'mean'),
              num_mujer_sola=('Hogares con una mujer sola mayor de 65 años', 'mean'),
              num_hombre_solo=('Hogares con un hombre solo mayor de 65 años', 'mean'),
              inversion=('Inversion', 'mean'),
              superficie=('Superficie (Ha.)', 'mean'),
-             densidad=('Densidad (hab./Ha.)', 'mean'),
+             densidad=('Población densidad (hab./Ha.)', 'mean'),
              n_habitantes=('Número Habitantes', 'mean'),
              n_hab_mujeres=('Población Mujeres', 'mean'),
              edad_media_poblac=('Edad media de la población', 'mean'),
@@ -254,7 +251,8 @@ if __name__ == '__main__':
              poblacion_estudios_superiores=('poblacion_estudios_superiores', 'mean'),
              precio_vivienda=('precio_vivienda', 'mean'),
              num_extranj=('Personas con nacionalidad extranjera', 'mean'),
-             total_hogares=('Total hogares', 'mean'))
+             total_hogares=('Total hogares', 'mean'),
+             renta=("Renta neta media anual de los hogares (Urban Audit)",'mean'))
         .reset_index()
     )
     dataset_k4.to_csv('DATOS/PREDICCION/dataset_clusters_4_flourish.csv', index=False)
