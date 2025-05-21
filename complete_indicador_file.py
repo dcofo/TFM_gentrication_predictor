@@ -169,6 +169,7 @@ if __name__ == '__main__':
     file = "general_data_v2.csv"
     df_nivel_educativo = extract_nivel_educativo_indicador(path+file)
     df_precio_vivienda = extract_precio_vivienda_indicator(df_nivel_educativo)
+    df_precio_vivienda["anyo_timestamp"] = pd.to_datetime(df_precio_vivienda['anyo'], format='%Y').dt.strftime('%Y-%m-%d')
     clean_and_select_places.create_csv(df_precio_vivienda, path, "general_data_v3.csv")
     print("main")
 
