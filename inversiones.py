@@ -159,6 +159,21 @@ def crear_archivo_global():
     barrios = np.tile(nombre_barrios, len(anyos))
     anyo_rep = np.repeat(anyos, len(nombre_barrios))
     df_general = pd.DataFrame({"Barrio": barrios, "anyo": anyo_rep})
+    
+    # Se corrigen los nombres de los barrios
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Palos de Moguer', 'Palos de la Frontera')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Rios Rosas','Ríos Rosas')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Salvador','El Salvador')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Jerónimos','Los Jerónimos')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('San Andrés', 'Villaverde Alto, Casco Histórico de Villaverde')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Los Angeles','Ángeles')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('San Cristobal','San Cristóbal')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Casco histórico de Vicálvaro','Casco Histórico de Vicálvaro')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Cármenes','Los Cármenes')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Fuentelareina','Fuentelarreina')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Aguilas','Águilas')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Apostol Santiago','Apóstol Santiago')
+    df_general['Barrio'] = df_general['Barrio'].str.replace('Puerta del Angel','Puerta del Ángel')
     return df_general
     
 
